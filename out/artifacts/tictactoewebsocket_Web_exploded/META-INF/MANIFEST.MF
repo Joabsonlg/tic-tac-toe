@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Created-By: IntelliJ IDEA
+Built-By: joabson
+Build-Jdk: Oracle OpenJDK version 19.0.1
+Implementation-Title: tictactoewebsocket
+Implementation-Version: 0.0.1-SNAPSHOT
+Implementation-Vendor-Id: com.joabsonlg
+Main-Class: ${start-class}
+
