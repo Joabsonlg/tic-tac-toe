@@ -97,7 +97,7 @@ const showWinner = (winner) => {
         winningPositions.forEach(position => {
             const row = Math.floor(position / 3);
             const cell = position % 3;
-            let cellElement = document.querySelector(`.row-${row} .cell-${cell}`);
+            let cellElement = document.querySelector(`.row-${row} .cell-${cell} span`);
             cellElement.style.backgroundColor = '#b3e6ff';
         });
     }
@@ -166,7 +166,7 @@ const updateBoard = (board) => {
     board.forEach((row, rowIndex) => {
         row.forEach((cell, cellIndex) => {
             const cellElement = document.querySelector(`.row-${rowIndex} .cell-${cellIndex}`);
-            cellElement.innerHTML = cell === ' ' ? '<button onclick="makeMove(' + counter + ')"> </button>' : cell;
+            cellElement.innerHTML = cell === ' ' ? '<button onclick="makeMove(' + counter + ')"> </button>' : `<span class="cell-item">${cell}</span>`;
             counter++;
         });
     });

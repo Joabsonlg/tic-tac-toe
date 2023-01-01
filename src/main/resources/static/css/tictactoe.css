@@ -3,7 +3,6 @@
     flex-direction: column;
     width: 300px;
     height: 300px;
-    border: 1px solid black;
 }
 
 .row {
@@ -19,13 +18,23 @@
     align-items: center;
     width: 33.33%;
     height: 100%;
-    border: 1px solid black;
+    border-radius: 10px;
 }
 
 .cell button {
     width: 100%;
     height: 100%;
     font-size: 50px;
+    background-color: antiquewhite;
+    border-radius: 10px;
+}
+
+.cell span {
+    font-size: 50px;
+    background-color: antiquewhite;
+    border-radius: 10px;
+    width: 98%;
+    height: 98%;
 }
 
 .game-content {
@@ -45,4 +54,30 @@
 
 .text-red {
     color: red;
+}
+
+.text-white {
+    color: white;
+}
+
+body {
+    background-image: url("/img/wallpaper.png");
+    background-repeat: no-repeat;
+    background-size: cover;
+    margin: 0;
+}
+
+.card {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.cell-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
 }

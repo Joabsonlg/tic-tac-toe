@@ -32,7 +32,7 @@ public class TicTacToe {
         int row = move / 3;
         int col = move % 3;
         if (Objects.equals(board[row][col], " ")) {
-            board[row][col] = player;
+            board[row][col] = Objects.equals(player, player1) ? "X" : "O";
             turn = player.equals(player1) ? player2 : player1;
             checkWinner();
             updateGameState();
