@@ -76,7 +76,7 @@ public class TicTacToe {
         }
     }
 
-    private void setWinner(String winner) {
+    public void setWinner(String winner) {
         this.winner = winner;
     }
 

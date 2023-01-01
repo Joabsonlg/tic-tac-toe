@@ -1,8 +1,8 @@
 package com.joabsonlg.tictactoewebsocket.controller;
 
 import com.joabsonlg.tictactoewebsocket.enumeration.GameState;
-import com.joabsonlg.tictactoewebsocket.model.TicTacToe;
 import com.joabsonlg.tictactoewebsocket.manager.TicTacToeManager;
+import com.joabsonlg.tictactoewebsocket.model.TicTacToe;
 import com.joabsonlg.tictactoewebsocket.model.dto.JoinMessage;
 import com.joabsonlg.tictactoewebsocket.model.dto.PlayerMessage;
 import com.joabsonlg.tictactoewebsocket.model.dto.TicTacToeMessage;
@@ -57,14 +57,8 @@ public class MessageController {
         headerAccessor.getSessionAttributes().put("gameId", game.getGameId());
         headerAccessor.getSessionAttributes().put("player", message.getPlayer());
 
-        TicTacToeMessage gameMessage = new TicTacToeMessage();
+        TicTacToeMessage gameMessage = gameToMessage(game);
         gameMessage.setType("game.joined");
-        gameMessage.setGameId(game.getGameId());
-        gameMessage.setPlayer1(game.getPlayer1());
-        gameMessage.setPlayer2(game.getPlayer2());
-        gameMessage.setBoard(game.getBoard());
-        gameMessage.setTurn(game.getTurn());
-        gameMessage.setGameState(game.getGameState());
         return gameMessage;
     }
 
@@ -79,14 +73,8 @@ public class MessageController {
     public void leaveGame(@Payload PlayerMessage message) {
         TicTacToe game = ticTacToeManager.leaveGame(message.getPlayer());
         if (game != null) {
-            TicTacToeMessage gameMessage = new TicTacToeMessage();
+            TicTacToeMessage gameMessage = gameToMessage(game);
             gameMessage.setType("game.left");
-            gameMessage.setGameId(game.getGameId());
-            gameMessage.setPlayer1(game.getPlayer1());
-            gameMessage.setPlayer2(game.getPlayer2());
-            gameMessage.setBoard(game.getBoard());
-            gameMessage.setTurn(game.getTurn());
-            gameMessage.setGameState(game.getGameState());
             messagingTemplate.convertAndSend("/topic/game." + game.getGameId(), gameMessage);
         }
     }
@@ -104,18 +92,23 @@ public class MessageController {
         String gameId = message.getGameId();
         int move = message.getMove();
         TicTacToe game = ticTacToeManager.getGame(gameId);
+
         if (game == null || game.isGameOver()) {
             TicTacToeMessage errorMessage = new TicTacToeMessage();
             errorMessage.setType("error");
-            errorMessage.setContent("Jogo não encontrado ou já encerrado.");
+            errorMessage.setContent("Game not found or is already over.");
             this.messagingTemplate.convertAndSend("/topic/game." + gameId, errorMessage);
+            return;
         }
+
         if (game.getGameState().equals(GameState.WAITING_FOR_PLAYER)) {
             TicTacToeMessage errorMessage = new TicTacToeMessage();
             errorMessage.setType("error");
-            errorMessage.setContent("Aguardando outro jogador.");
+            errorMessage.setContent("Game is waiting for another player to join.");
             this.messagingTemplate.convertAndSend("/topic/game." + gameId, errorMessage);
+            return;
         }
+
         if (game.getTurn().equals(player)) {
             game.makeMove(player, move);
 
@@ -124,7 +117,7 @@ public class MessageController {
             this.messagingTemplate.convertAndSend("/topic/game." + gameId, gameStateMessage);
 
             if (game.isGameOver()) {
-                TicTacToeMessage gameOverMessage = new TicTacToeMessage(game);
+                TicTacToeMessage gameOverMessage = gameToMessage(game);
                 gameOverMessage.setType("game.gameOver");
                 this.messagingTemplate.convertAndSend("/topic/game." + gameId, gameOverMessage);
                 ticTacToeManager.removeGame(gameId);
@@ -139,15 +132,39 @@ public class MessageController {
         String player = headerAccessor.getSessionAttributes().get("player").toString();
         TicTacToe game = ticTacToeManager.getGame(gameId);
         if (game != null) {
-            TicTacToeMessage gameMessage = new TicTacToeMessage();
-            gameMessage.setType("game.left");
-            gameMessage.setGameId(game.getGameId());
-            gameMessage.setPlayer1(game.getPlayer1());
-            gameMessage.setPlayer2(game.getPlayer2());
-            gameMessage.setBoard(game.getBoard());
-            gameMessage.setTurn(game.getTurn());
-            gameMessage.setGameState(game.getGameState());
-            messagingTemplate.convertAndSend("/topic/game." + game.getGameId(), gameMessage);
+            if (game.getPlayer1().equals(player)) {
+                game.setPlayer1(null);
+                if (game.getPlayer2() != null) {
+                    game.setGameState(GameState.PLAYER2_WON);
+                    game.setWinner(game.getPlayer2());
+                } else {
+                    ticTacToeManager.removeGame(gameId);
+                }
+            } else if (game.getPlayer2() != null && game.getPlayer2().equals(player)) {
+                game.setPlayer2(null);
+                if (game.getPlayer1() != null) {
+                    game.setGameState(GameState.PLAYER1_WON);
+                    game.setWinner(game.getPlayer1());
+                } else {
+                    ticTacToeManager.removeGame(gameId);
+                }
+            }
+            TicTacToeMessage gameMessage = gameToMessage(game);
+            gameMessage.setType("game.gameOver");
+            messagingTemplate.convertAndSend("/topic/game." + gameId, gameMessage);
+            ticTacToeManager.removeGame(gameId);
         }
+    }
+
+    private TicTacToeMessage gameToMessage(TicTacToe game) {
+        TicTacToeMessage message = new TicTacToeMessage();
+        message.setGameId(game.getGameId());
+        message.setPlayer1(game.getPlayer1());
+        message.setPlayer2(game.getPlayer2());
+        message.setBoard(game.getBoard());
+        message.setTurn(game.getTurn());
+        message.setGameState(game.getGameState());
+        message.setWinner(game.getWinner());
+        return message;
     }
 }

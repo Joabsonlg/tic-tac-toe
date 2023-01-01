@@ -2,170 +2,31 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Tic-Tac-Toe</title>
+    <link th:href="@{/css/toastr.css}" type="text/css" rel="stylesheet"/>
+    <link th:href="@{/css/tictactoe.css}" type="text/css" rel="stylesheet"/>
 </head>
 <body>
-<div id="board">
-    <div th:each="row, state : ${board}" th:class="${#strings.concat('row row-', state.index)}">
-        <div th:each="cell, state2 : ${row}" th:class="${#strings.concat('cell cell-', state2.index)}">
-            <button th:if="${cell == ' '}" th:onclick="'makeMove(' + ${state2.index} + ')'" th:text="' '"></button>
-            <span th:if="${cell != ' '}" th:text="${cell}"></span>
+<div class="game-content">
+    <div class="game-info">
+        <div>Player 1: <span id="player1" class="text-red"></span></div>
+        <div>Player 2: <span id="player2" class="text-red"></span></div>
+        <div>Turn: <span id="turn" class="text-red"></span></div>
+        <div>Winner: <span id="winner" class="text-red">-</span></div>
+    </div>
+    <div id="board">
+        <div th:each="row, state : ${board}" th:class="${#strings.concat('row row-', state.index)}">
+            <div th:each="cell, state2 : ${row}" th:class="${#strings.concat('cell cell-', state2.index)}">
+                <button th:if="${cell == ' '}" th:onclick="'makeMove(' + ${state2.index} + ')'" th:text="' '"></button>
+                <span th:if="${cell != ' '}" th:text="${cell}"></span>
+            </div>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/stompjs@2/lib/stomp.min.js"></script>
-<script>
-    let stompClient = null;
-    let game = null;
-    let player = null;
-
-    function makeMove(move) {
-        sendMessage({
-            type: "game.move",
-            move: move,
-            turn: game.turn,
-            sender: player,
-            gameId: game.gameId
-        });
-    }
-
-    function sendMessage(message) {
-        stompClient.send(`/app/${message.type}`, {}, JSON.stringify(message));
-    }
-
-    function handleMessage(message) {
-        if (message.type === "game.move") {
-            updateBoard(message.board);
-            game.board = message.board;
-            game.turn = message.turn;
-            game.gameState = message.gameState;
-            game.winner = message.winner;
-            game.gameOver = message.gameOver;
-            game.type = message.type;
-        }
-
-        // Display the winner if the message type is "GAME_OVER"
-        if (message.type === "game.gameOver") {
-            showWinner(message.winner);
-        }
-
-        if (message.type === "game.joined") {
-            if (game !== null && game.gameId !== message.gameId) return;
-            updateBoard(message.board);
-            player = localStorage.getItem("playerName");
-            game = message
-
-            console.log("Epa", message);
-            const socket = new SockJS('/ws');
-            stompClient = Stomp.over(socket);
-            stompClient.connect({}, function (frame) {
-                stompClient.subscribe(`/topic/game.${message.gameId}`, function (message) {
-                    handleMessage(JSON.parse(message.body));
-                });
-            });
-            console.log("Epa2");
-        }
-
-        if (message.type === "error") {
-            alert(message.content);
-        }
-
-        if (message?.gameOver) {
-            if (message.gameState !== 'TIE') showWinner(message.winner);
-            else alert("It's a tie!");
-        }
-        console.table(game);
-    }
-
-    function updateBoard(board) {
-        let counter = 0;
-        board.forEach((row, rowIndex) => {
-            row.forEach((cell, cellIndex) => {
-                const cellElement = document.querySelector(`.row-${rowIndex} .cell-${cellIndex}`);
-                cellElement.innerHTML = cell === ' ' ? '<button onclick="makeMove(' + counter + ')"> </button>' : cell;
-                counter++;
-            });
-        });
-    }
-
-    function showWinner(winner) {
-        alert(`The winner is ${winner}!`);
-    }
-
-    function joinGame() {
-        const playerName = prompt("Enter your name:");
-        localStorage.setItem("playerName", playerName);
-        sendMessage({
-            type: "game.join",
-            player: playerName
-        });
-    }
-
-    function connect() {
-        const socket = new SockJS('/ws');
-        stompClient = Stomp.over(socket);
-        stompClient.connect({}, function (frame) {
-            stompClient.subscribe('/topic/game.state', function (message) {
-                handleMessage(JSON.parse(message.body));
-            });
-            loadGame();
-        });
-    }
-
-    window.onload = function () {
-        connect();
-    }
-
-    function loadGame() {
-        const playerName = localStorage.getItem("playerName");
-        if (playerName) {
-            sendMessage({
-                type: "game.join",
-                player: playerName
-            });
-        } else {
-            joinGame();
-        }
-    }
-</script>
-<style>
-    #board {
-        display: flex;
-        flex-direction: column;
-        width: 300px;
-        height: 300px;
-        border: 1px solid black;
-    }
-
-    .row {
-        display: flex;
-        flex-direction: row;
-        width: 100%;
-        height: 33.33%;
-    }
-
-    .cell {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 33.33%;
-        height: 100%;
-        border: 1px solid black;
-    }
-
-    .cell button {
-        width: 100%;
-        height: 100%;
-        font-size: 50px;
-    }
-
-    body {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-    }
-</style>
+<script th:src="@{/js/lib/sockjs.min.js}"></script>
+<script th:src="@{/js/lib/stomp.min.js}"></script>
+<script th:src="@{/js/lib/jquery-3.5.1.min.js}"></script>
+<script th:src="@{/js/lib/toastr.js}"></script>
+<script th:src="@{/js/tictactoe.js}"></script>
 </body>
 </html>
