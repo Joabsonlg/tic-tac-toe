@@ -33,7 +33,8 @@ const messagesTypes = {
     },
     "game.gameOver": (message) => {
         updateGame(message);
-        showWinner(message.winner);
+        if (message.gameState === 'TIE') toastr.success(`Game over! It's a tie!`);
+        else showWinner(message.winner);
     },
     "game.joined": (message) => {
         if (game !== null && game.gameId !== message.gameId) return;
